@@ -229,7 +229,114 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
       Returns the minimax action using self.depth and self.evaluationFunction
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #1 make minVal and MaxVal only compute the +inf or the -inf and the < or > part, put remainder in mainDriver
+    #3 cleanup variables in MinVal and MaxVal so we don't have to index [1]
+    def mainDriver(gameState, agent, depth, alpha, beta):
+
+      #once we run out of agents in the layer, we progress onto the next and reset Pacman
+      if agent > gameState.getNumAgents() or agent == gameState.getNumAgents():
+        agent = 0 #reset to Pacman
+        depth += 1
+
+      #terminator
+      if (depth == self.depth or gameState.isWin() or gameState.isLose()):
+        evalFunc = self.evaluationFunction(gameState)
+        fakeTuple = (evalFunc, "evalFunc")
+        return fakeTuple
+      
+      #extra cautious steps
+      actionsList = gameState.getLegalActions(agent) 
+      
+      vibeCheck(gameState, agent, actionsList)
+
+      return minMax(gameState, agent, depth, alpha, beta)
+
+
+    def vibeCheck(gameState, agent, actionsList):  
+      if not actionsList:
+        evalFunc = self.evaluationFunction(gameState)
+        fakeTuple = (evalFunc, "evalFunc")
+        return fakeTuple
+
+    #THIS MIGHT BREAK EVERYTHING
+    def minMax(gameState, agent, depth, alpha, beta):
+
+      actionsList = gameState.getLegalActions(agent)
+
+      vibeCheck(gameState, agent, actionsList)
+
+      if agent == 0:
+        flag = "pacman"
+      else:
+        flag = "ghost"
+        
+      if flag == "pacman":
+        ret = (-999999, "dicks")
+
+        for action in actionsList:
+          nextState = gameState.generateSuccessor(agent, action)
+          decidingVal = mainDriver(nextState, agent+1, depth, alpha, beta)
+        
+          returnVal = decidingVal[0]
+          comparison = ret[0]
+
+          if returnVal > comparison:
+            tempTuple = (returnVal, action)
+            ret = tempTuple
+            if returnVal > beta:
+              return ret
+          
+          """
+          if returnVal > beta:
+            tempTuple = (returnVal, action)
+            ret = tempTuple
+            return ret
+          """
+          
+          #change alpha if newly founded value exceeds current alpha
+          #else:
+          if alpha > returnVal:
+            alpha = alpha
+          else:
+            alpha = returnVal
+
+        return ret
+
+      if flag == "ghost":
+        ret = ("dicks", 999999)
+
+        for action in actionsList:
+          nextState = gameState.generateSuccessor(agent, action)
+          decidingVal = mainDriver(nextState, agent+1, depth, alpha, beta)
+        
+          returnVal = decidingVal[0]
+          comparison = ret[0]
+
+          if returnVal < comparison:
+            tempTuple = (returnVal, action)
+            ret = tempTuple
+            if returnVal < alpha:
+              return ret 
+
+
+          #prune
+          """
+          if returnVal < alpha:
+            tempTuple = (returnVal, action)
+            ret = tempTuple
+            return ret
+          """
+          
+          #change beta if newly founded value is less than current beta
+          #else:
+          if beta < returnVal:
+            beta = beta
+          else:
+            beta = returnVal 
+
+        return ret
+                    
+    return mainDriver(gameState, 0, 0, -999999, 999999)[1]          
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
   """
