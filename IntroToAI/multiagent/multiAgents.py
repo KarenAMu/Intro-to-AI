@@ -283,21 +283,12 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           if returnVal > comparison:
             tempTuple = (returnVal, action)
             ret = tempTuple
+            #if we need to prune
             if returnVal > beta:
               return ret
           
-          """
-          if returnVal > beta:
-            tempTuple = (returnVal, action)
-            ret = tempTuple
-            return ret
-          """
-          
           #change alpha if newly founded value exceeds current alpha
-          #else:
-          if alpha > returnVal:
-            alpha = alpha
-          else:
+          if alpha < returnVal:
             alpha = returnVal
 
         return ret
@@ -315,23 +306,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           if returnVal < comparison:
             tempTuple = (returnVal, action)
             ret = tempTuple
+
+            #if we need to prune
             if returnVal < alpha:
               return ret 
 
-
-          #prune
-          """
-          if returnVal < alpha:
-            tempTuple = (returnVal, action)
-            ret = tempTuple
-            return ret
-          """
-          
           #change beta if newly founded value is less than current beta
-          #else:
-          if beta < returnVal:
-            beta = beta
-          else:
+          if beta > returnVal:
             beta = returnVal 
 
         return ret
