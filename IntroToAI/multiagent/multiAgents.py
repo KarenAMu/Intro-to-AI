@@ -144,33 +144,79 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
     """
     "*** YOUR CODE HERE ***"
-    multiAgent = MultiAgentSearchAgent()
-    #multiAgent.index=0 means Pacman, ghosts are >= 1
-    #self.evaluationFunction
-
-    #if Pacman, call maxValue
-    if multiAgent.index == 0:
-      print ('DICKS')
-      if 
     
-    #if Ghost, call minValue
-    else:
-      print('what')
+    def main(gameState, agent, depth):
+      #GITHUB
+      if agent >= gameState.getNumAgents():
+        agent = 0
+        deepness += 1
 
-    #print(len(gameState.getLegalActions(multiAgent.index))) #is a list of length 3
-    #print(gameState.getLegalActions(multiAgent.index)[0]) #0th index is direction
-    #print(gameState.getLegalActions(multiAgent.index)[1]) #1th index is STOP?
-    #print(gameState.getLegalActions(multiAgent.index)[2]) #2th index is direction
-    #util.raiseNotDefined()
-    return gameState
+      if depth == self.depth or gameState.isLose() or gameState.isWin():
+        return self.evaluationFunction(gameState)
 
+      #if Pacman
+      if agent == 0:
+        return MaxValue(gameState, agent, depth)
+
+      #if Ghost
+      else:
+        return MinValue(gameState, agent, depth)
+    
+    #if Pacman
+    def MaxValue(gameState, agent, depth):
+      actionsList = gameState.getLegalActions(agent)
+
+      if not actionsList:
+        return self.evaluationFunction(gameState)
+
+      else:
+        dummyList = ["dummyAction", float("-inf")]
+        for moves in actionsList:
+          nextState = gameState.generateSuccessor(agent, moves)
+          ret = main(nextState, agent+1, depth)
+          dummyList = [moves,maxFunc]
+
+          #ALL GITHUB
+          if type(ret) is list:
+            test = ret[1]
+          else:
+            test = ret
+        
+          if test > dummyList[1]:
+            dummyList = [action,test]
+            #minMax = max(dummyList[1],maxFunc[1])
+      return dummyList 
+
+    #if Ghost
+    def minValue(gameState, agent, depth):
+      actionsList = gameState.getLegalActions(agent)
+
+      if not actionsList:
+        return self.evaluationFunction(gameState)
+      
+      else:
+        dummyList = ["dummyAction", float("inf")]
+        for moves in actionsList:
+          nextState = gameState.generateSuccessor(agent, moves)
+          ret = main(nextState, agent+1, depth)
+          dummyList = [moves,maxFunc]
+
+          #ALL GITHUB
+          if type(ret) is list:
+            test = ret[1]
+          else:
+            test = ret
+
+          if test < dummyList[1]:
+            dummyList = [action,test]
+            #minMax = max(dummyList[1],maxFunc[1]) 
+      return dummyList
+
+    #get root of tree as solution
+    gameTree = main(gameState,0,0)
+    return gameTree[0]
+                 
   
-  def minValue(self, gameState):
-    util.raiseNotDefined()
-  
-  def maxValue(self, gameState):
-    util.raiseNotDefined()
-
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
     Your minimax agent with alpha-beta pruning (question 3)
