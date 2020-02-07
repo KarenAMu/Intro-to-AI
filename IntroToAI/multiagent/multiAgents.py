@@ -60,6 +60,7 @@ class ReflexAgent(Agent):
     Print out these variables to see what you're getting, then combine them
     to create a masterful evaluation function.
     """
+    import math
     # Useful information you can extract from a GameState (pacman.py)
     successorGameState = currentGameState.generatePacmanSuccessor(action)
     newPos = successorGameState.getPacmanPosition()
@@ -71,10 +72,10 @@ class ReflexAgent(Agent):
     newFoodList = newFood.asList()
 
     foodDist = 0
-    ghostDist = float("inf")
+    ghostDist = 999999
 
     if currFood.count() == len(newFood.asList()):
-      foodDist = float("inf")
+      foodDist = 999999
       for food in newFoodList:
         MH = util.manhattanDistance(food, newPos)
         foodDist = min(MH,foodDist)
@@ -82,11 +83,11 @@ class ReflexAgent(Agent):
     for ghosts in newGhostStates:
       MH = util.manhattanDistance(ghosts.getPosition(), newPos)
       ghostDist = min(MH,ghostDist)
-      foodDist += 9 ** (3 - ghostDist)
+      foodDist += math.sqrt(9 ** (9 - (2 * ghostDist)))
 
     "*** YOUR CODE HERE ***"
     #eturn successorGameState.getScore()
-    return -foodDist
+    return -1 * foodDist
 
 def scoreEvaluationFunction(currentGameState):
   """
@@ -156,7 +157,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
       #terminator
       if (depth == self.depth or gameState.isWin() or gameState.isLose()):
         evalFunc = self.evaluationFunction(gameState)
-        fakeTuple = ("evalFunc", evalFunc)
+        fakeTuple = (evalFunc, "evalFunc")
         return fakeTuple
       
       #extra cautious steps
@@ -164,61 +165,13 @@ class MinimaxAgent(MultiAgentSearchAgent):
       
       vibeCheck(gameState, agent, actionsList)
 
-      #return minMax(gameState, agent, depth)
+      return minMax(gameState, agent, depth)
 
-      #if pacman
-      if agent == 0:
-        return maxVal(gameState, agent, depth)
-
-      #if ghost
-      if agent != 0:
-        return minVal(gameState, agent, depth)
-      
-    
-    #if pacman
-    def maxVal(gameState, agent, depth):
-
-      ret = ("dicks", float("-inf"))
-
-      actionsList = gameState.getLegalActions(agent)
-
-      vibeCheck(gameState, agent, actionsList)
-                
-      for action in actionsList:
-        nextState = gameState.generateSuccessor(agent, action)
-        decidingVal = mainDriver(nextState, agent+1, depth)
-        
-        returnVal = decidingVal[1]
-        comparison = ret[1]
-        
-        if returnVal > comparison:
-          tempTuple = (action, returnVal)
-          ret = tempTuple       
-      return ret
-    
-    #if ghost
-    def minVal(gameState, agent, depth):
-      ret = ("dicks", float("inf"))
-      actionsList = gameState.getLegalActions(agent)
-
-      vibeCheck(gameState, agent, actionsList)
-                
-      for action in actionsList:
-        nextState = gameState.generateSuccessor(agent, action)
-        decidingVal = mainDriver(nextState, agent+1, depth)
-
-        returnVal = decidingVal[1]
-        comparison = ret[1]
-
-        if returnVal < comparison:
-          tempTuple = (action, returnVal)
-          ret = tempTuple      
-      return ret
 
     def vibeCheck(gameState, agent, actionsList):  
       if not actionsList:
         evalFunc = self.evaluationFunction(gameState)
-        fakeTuple = ("evalFunc",evalFunc)
+        fakeTuple = (evalFunc, "evalFunc")
         return fakeTuple
 
     #THIS MIGHT BREAK EVERYTHING
@@ -234,37 +187,37 @@ class MinimaxAgent(MultiAgentSearchAgent):
         flag = "ghost"
         
       if flag == "pacman":
-        ret = ("dicks", float("-inf"))
+        ret = (-999999, "dicks")
 
         for action in actionsList:
           nextState = gameState.generateSuccessor(agent, action)
           decidingVal = mainDriver(nextState, agent+1, depth)
         
-          returnVal = decidingVal[1]
-          comparison = ret[1]
+          returnVal = decidingVal[0]
+          comparison = ret[0]
         
           if returnVal > comparison:
-            tempTuple = (action, returnVal)
+            tempTuple = (returnVal, action)
             ret = tempTuple   
 
         return ret
 
       if flag == "ghost":
-        ret = ("dicks", float("inf"))
+        ret = ("dicks", 999999)
 
         for action in actionsList:
           nextState = gameState.generateSuccessor(agent, action)
           decidingVal = mainDriver(nextState, agent+1, depth)
         
-          returnVal = decidingVal[1]
-          comparison = ret[1]
+          returnVal = decidingVal[0]
+          comparison = ret[0]
         
           if returnVal < comparison:
-            tempTuple = (action, returnVal)
+            tempTuple = (returnVal, action)
             ret = tempTuple       
         return ret
                     
-    return mainDriver(gameState, 0, 0)[0]               
+    return mainDriver(gameState, 0, 0)[1]               
   
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
