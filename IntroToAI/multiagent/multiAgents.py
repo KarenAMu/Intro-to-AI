@@ -144,78 +144,91 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
     """
     "*** YOUR CODE HERE ***"
-    
-    def main(gameState, agent, depth):
+    #1 make minVal and MaxVal only compute the +inf or the -inf and the < or > part, put remainder in mainDriver
+    #2 put extra coutious steps as its own method if possible (do this first)
+    #3 add flag to check what mainDriver returned (float or tuple) so we don't neet to check using type returned
+    def mainDriver(gameState, agent, depth):
+
       #GITHUB
-      if agent >= gameState.getNumAgents():
-        agent = 0
-        deepness += 1
+      #once we run out of agents in the layer, we progress onto the next and reset Pacman
+      if agent > gameState.getNumAgents() or agent == gameState.getNumAgents():
+        agent = 0 #reset to Pacman
+        depth += 1
 
-      if depth == self.depth or gameState.isLose() or gameState.isWin():
-        return self.evaluationFunction(gameState)
-
-      #if Pacman
-      if agent == 0:
-        return MaxValue(gameState, agent, depth)
-
-      #if Ghost
-      else:
-        return MinValue(gameState, agent, depth)
-    
-    #if Pacman
-    def MaxValue(gameState, agent, depth):
-      actionsList = gameState.getLegalActions(agent)
-
-      if not actionsList:
-        return self.evaluationFunction(gameState)
-
-      else:
-        dummyList = ["dummyAction", float("-inf")]
-        for moves in actionsList:
-          nextState = gameState.generateSuccessor(agent, moves)
-          ret = main(nextState, agent+1, depth)
-          dummyList = [moves,maxFunc]
-
-          #ALL GITHUB
-          if type(ret) is list:
-            test = ret[1]
-          else:
-            test = ret
-        
-          if test > dummyList[1]:
-            dummyList = [action,test]
-            #minMax = max(dummyList[1],maxFunc[1])
-      return dummyList 
-
-    #if Ghost
-    def minValue(gameState, agent, depth):
-      actionsList = gameState.getLegalActions(agent)
-
-      if not actionsList:
+      #terminator
+      if (depth == self.depth or gameState.isWin() or gameState.isLose()):
         return self.evaluationFunction(gameState)
       
+      #extra cautious steps
+      actionsList = gameState.getLegalActions(agent) 
+      if not actionsList:
+        return self.evaluationFunction(gameState)
+
+      #if pacman
+      if (agent == 0):
+        actionsList = gameState.getLegalActions(agent) 
+        if not actionsList:
+          return self.evaluationFunction(gameState)
+
+        return maxVal(gameState, agent, depth)
+
+      #if ghost
       else:
-        dummyList = ["dummyAction", float("inf")]
-        for moves in actionsList:
-          nextState = gameState.generateSuccessor(agent, moves)
-          ret = main(nextState, agent+1, depth)
-          dummyList = [moves,maxFunc]
+        actionsList = gameState.getLegalActions(agent)
+        if not actionsList:
+          return self.evaluationFunction(gameState)
+        return minVal(gameState, agent, depth)
+    
+    #if pacman
+    def maxVal(gameState, agent, depth):
+      ret = ("", -float("inf"))
+      actionsList = gameState.getLegalActions(agent)
+            
+      if not actionsList:
+        return self.evaluationFunction(gameState)
+                
+      for action in actionsList:
+        nextState = gameState.generateSuccessor(agent, action)
+        nextValue = mainDriver(nextState, agent+1, depth)
+        
+        #only index if tuple
+        if type(nextValue) is tuple:
+          nextVal = nextValue[1]
 
-          #ALL GITHUB
-          if type(ret) is list:
-            test = ret[1]
-          else:
-            test = ret
+        #if terminator function was called
+        if type(nextValue) is float:
+          nextVal = nextValue
 
-          if test < dummyList[1]:
-            dummyList = [action,test]
-            #minMax = max(dummyList[1],maxFunc[1]) 
-      return dummyList
+        if nextVal > ret[1]:
+          tempTuple = (action, nextVal)
+          ret = tempTuple                 
+      return ret
+    
+    #if ghost
+    def minVal(gameState, agent, depth):
+      ret = ("", float("inf"))
+      actionsList = gameState.getLegalActions(agent)
+            
+      if not actionsList:
+        return self.evaluationFunction(gameState)
+                
+      for action in actionsList:
+        nextState = gameState.generateSuccessor(agent, action)
+        nextValue = mainDriver(nextState, agent+1, depth)
+        if type(nextValue) is tuple:
+          nextVal = nextValue[1]
 
-    #get root of tree as solution
-    gameTree = main(gameState,0,0)
-    return gameTree[0]
-                 
+        if type(nextValue) is float:
+          nextVal = nextValue
+
+        if nextVal < ret[1]:
+          tempTuple = (action, nextVal)
+          ret = tempTuple      
+      return ret
+             
+    root = mainDriver(gameState, 0, 0)
+    return root[0]
+         
   
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
