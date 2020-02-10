@@ -187,7 +187,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         flag = "ghost"
         
       if flag == "pacman":
-        ret = (-999999, "dicks")
+        ret = (-999999, "")
 
         for action in actionsList:
           nextState = gameState.generateSuccessor(agent, action)
@@ -203,7 +203,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return ret
 
       if flag == "ghost":
-        ret = ("dicks", 999999)
+        ret = ("", 999999)
 
         for action in actionsList:
           nextState = gameState.generateSuccessor(agent, action)
@@ -269,9 +269,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         flag = "pacman"
       else:
         flag = "ghost"
-        
+
       if flag == "pacman":
-        ret = (-999999, "dicks")
+        ret = (-999999, "")
 
         for action in actionsList:
           nextState = gameState.generateSuccessor(agent, action)
@@ -294,7 +294,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         return ret
 
       if flag == "ghost":
-        ret = ("dicks", 999999)
+        ret = ("", 999999)
 
         for action in actionsList:
           nextState = gameState.generateSuccessor(agent, action)
@@ -320,19 +320,77 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     return mainDriver(gameState, 0, 0, -999999, 999999)[1]          
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
-  """
-    Your expectimax agent (question 4)
-  """
-
-  def getAction(self, gameState):
     """
-      Returns the expectimax action using self.depth and self.evaluationFunction
-
-      All ghosts should be modeled as choosing uniformly at random from their
-      legal moves.
+      Your expectimax agent (question 4)
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    def getAction(self, gameState):
+
+      def mainDriver(gameState, agent, depth):
+
+        #once we run out of agents in the layer, we progress onto the next and reset Pacman
+        if agent > gameState.getNumAgents() or agent == gameState.getNumAgents():
+          agent = 0 #reset to Pacman
+          depth += 1
+
+        #terminator
+        if (depth == self.depth or gameState.isWin() or gameState.isLose()):
+          evalFunc = self.evaluationFunction(gameState)
+          fakeTuple = (evalFunc, "evalFunc")
+          return fakeTuple
+        
+        if agent == 0:
+          return maxVal(gameState, agent, depth)
+      
+        else:
+          return expectiMax(gameState, agent, depth)
+
+
+      def vibeCheck(gameState, agent, actionsList):  
+        if not actionsList:
+          evalFunc = self.evaluationFunction(gameState)
+          fakeTuple = (evalFunc, "evalFunc")
+          return fakeTuple
+
+      #THIS MIGHT BREAK EVERYTHING
+      def maxVal(gameState, agent, depth):
+
+        actionsList = gameState.getLegalActions(agent)
+        ret = (-999999, "")
+
+        for action in actionsList:
+          nextState = gameState.generateSuccessor(agent, action)
+          decidingVal = mainDriver(nextState, agent+1, depth)
+        
+          returnVal = decidingVal[0]
+          comparison = ret[0]
+        
+          if returnVal > comparison:
+            tempTuple = (returnVal, action)
+            ret = tempTuple   
+        return ret
+
+      def expectiMax(gameState, agent, depth):
+        actionsList = gameState.getLegalActions(agent)
+        ret = (0, "")
+        probability = 1.0/len(actionsList)  
+
+        for action in actionsList:
+          nextState = gameState.generateSuccessor(agent, action)
+          decidingVal = mainDriver(nextState, agent+1, depth)
+        
+          returnVal = decidingVal[0] * 1.0
+          comparison = ret[0] * 1.0
+  
+          comparison += returnVal * probability
+          
+          tempTuple = (comparison, action)
+          ret = tempTuple   
+        return ret
+                    
+      return mainDriver(gameState, 0, 0)[1]
+
+
+ 
 
 def betterEvaluationFunction(currentGameState):
   """
