@@ -75,19 +75,20 @@ class ReflexAgent(Agent):
     foodDist = 0
     ghostDist = 999999
 
+    #compute new minimum of manhattan distance of food once pacman we have existing food to eat
     if currFood.count() == len(newFood.asList()):
       foodDist = 999999
       for food in newFoodList:
         MH = util.manhattanDistance(food, newPos)
         foodDist = min(MH,foodDist)
 
+    #since our evaluation function is dependent on mainly food and ghosts, we compute distance to
+    #nearest ghost and base our evaluation function from that 
     for ghosts in newGhostStates:
       MH = util.manhattanDistance(ghosts.getPosition(), newPos)
       ghostDist = min(MH,ghostDist)
       foodDist += math.sqrt(9 ** (9 - (2 * ghostDist))) 
 
-    "*** YOUR CODE HERE ***"
-    #eturn successorGameState.getScore()
     return -1 * foodDist
 
 def scoreEvaluationFunction(currentGameState):
@@ -153,7 +154,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         agent = 0 #reset to Pacman
         depth += 1
 
-      #terminator
+      #terminator, once we reach all levels deep or game ends
       if (depth == self.depth or gameState.isWin() or gameState.isLose()):
         evalFunc = self.evaluationFunction(gameState)
         fakeTuple = (evalFunc, "evalFunc")
@@ -173,7 +174,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
         fakeTuple = (evalFunc, "evalFunc")
         return fakeTuple
 
-    #MinMax
+    #MinMax, VibeCheck, and mainDriver all have tuples as return type since we only care about ACTION
+    #not the score, but score is needed to compute correct action, so we have both in tuple but only return one 
     def minMax(gameState, agent, depth):
 
       actionsList = gameState.getLegalActions(agent)
@@ -184,7 +186,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
         flag = "pacman"
       else:
         flag = "ghost"
-        
+      
+      #if agent is pacman, we take the "max"
       if flag == "pacman":
         ret = (-999999, "")
 
@@ -201,6 +204,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         return ret
 
+      #if agent is pacman, we take the "min"
       if flag == "ghost":
         ret = ("", 999999)
 
@@ -235,7 +239,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         agent = 0 #reset to Pacman
         depth += 1
 
-      #terminator
+      #terminator, once we reach all levels deep or game ends
       if (depth == self.depth or gameState.isWin() or gameState.isLose()):
         evalFunc = self.evaluationFunction(gameState)
         fakeTuple = (evalFunc, "evalFunc")
@@ -255,7 +259,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         fakeTuple = (evalFunc, "evalFunc")
         return fakeTuple
 
-    #MinMax
+    #MinMax, VibeCheck, and mainDriver all have tuples as return type since we only care about ACTION
+    #not the score, but score is needed to compute correct action, so we have both in tuple but only return one 
     def minMax(gameState, agent, depth, alpha, beta):
 
       actionsList = gameState.getLegalActions(agent)
@@ -267,6 +272,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
       else:
         flag = "ghost"
 
+      #if agent is pacman, we take the "max" and check if we need to prune (same logic as in textbook/class notes)
+      #we also update alpha accordingly
       if flag == "pacman":
         ret = (-999999, "")
 
@@ -290,6 +297,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
         return ret
 
+      #if agent is ghost, we take the "min" and check if we need to prune (same logic as in textbook/class notes)
+      #we also update beta accordingly
       if flag == "ghost":
         ret = ("", 999999)
 
@@ -328,7 +337,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           agent = 0 #reset to Pacman
           depth += 1
 
-        #terminator
+        #terminator, once we reach all levels deep or game ends
         if (depth == self.depth or gameState.isWin() or gameState.isLose()):
           evalFunc = self.evaluationFunction(gameState)
           fakeTuple = (evalFunc, "evalFunc")
@@ -348,7 +357,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           fakeTuple = (evalFunc, "evalFunc")
           return fakeTuple
 
-      #MinMax
+      #MinMax, VibeCheck, and mainDriver all have tuples as return type since we only care about ACTION
+      #not the score, but score is needed to compute correct action, so we have both in tuple but only return one 
       def minMax(gameState, agent, depth):
 
         actionsList = gameState.getLegalActions(agent)
@@ -359,7 +369,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           flag = "pacman"
         else:
           flag = "ghost"
-          
+        
+        #if agent is pacman, we make no changes (same as minMax above)
         if flag == "pacman":
           ret = ( -999999, "")
 
@@ -376,6 +387,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
           return ret
 
+        #if agent is a ghost, we know it's a min Node and easily compute probability
+        # min nopde's weight is simply it's value multiplied by number of actions (paths) ghost can take
         if flag == "ghost":
           ret = (999999, "")
           probability = 1.0/len(actionsList)  
@@ -441,7 +454,7 @@ def betterEvaluationFunction(currentGameState):
      else:
        smallestFood = smallestFood
    
-   #manually computing nearest ghosts 
+   #manually computing nearest ghosts, active and scared ones
    for ghost in range(len(ghostList)):
      
      currGhost = ghostList[ghost]
@@ -456,12 +469,14 @@ def betterEvaluationFunction(currentGameState):
        MH = util.manhattanDistance(pacPos, ghostPos)
        scaredGhosts.append(MH)
    
+   #find closest distance to an active ghost, provided there are any
    if activeGhosts:
      minGhostDist = activeGhosts[0]
      for ghost in activeGhosts:
        if ghost < minGhostDist:
          minGhostDist = ghost
-
+   
+   #find closest distance to a scared ghost, provided there are any
    if scaredGhosts:
      smallestScared = scaredGhosts[0]
      for ghost in scaredGhosts:
