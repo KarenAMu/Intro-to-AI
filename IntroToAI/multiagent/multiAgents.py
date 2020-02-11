@@ -84,7 +84,7 @@ class ReflexAgent(Agent):
     for ghosts in newGhostStates:
       MH = util.manhattanDistance(ghosts.getPosition(), newPos)
       ghostDist = min(MH,ghostDist)
-      foodDist += math.sqrt(9 ** (9 - (2 * ghostDist))) #break into 4 lines
+      foodDist += math.sqrt(9 ** (9 - (2 * ghostDist))) 
 
     "*** YOUR CODE HERE ***"
     #eturn successorGameState.getScore()
@@ -146,8 +146,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
     """
     "*** YOUR CODE HERE ***"
-    #1 make minVal and MaxVal only compute the +inf or the -inf and the < or > part, put remainder in mainDriver
-    #3 cleanup variables in MinVal and MaxVal so we don't have to index [1]
     def mainDriver(gameState, agent, depth):
 
       #once we run out of agents in the layer, we progress onto the next and reset Pacman
@@ -175,7 +173,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         fakeTuple = (evalFunc, "evalFunc")
         return fakeTuple
 
-    #THIS MIGHT BREAK EVERYTHING
+    #MinMax
     def minMax(gameState, agent, depth):
 
       actionsList = gameState.getLegalActions(agent)
@@ -230,8 +228,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
       Returns the minimax action using self.depth and self.evaluationFunction
     """
     "*** YOUR CODE HERE ***"
-    #1 make minVal and MaxVal only compute the +inf or the -inf and the < or > part, put remainder in mainDriver
-    #3 cleanup variables in MinVal and MaxVal so we don't have to index [1]
     def mainDriver(gameState, agent, depth, alpha, beta):
 
       #once we run out of agents in the layer, we progress onto the next and reset Pacman
@@ -259,7 +255,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         fakeTuple = (evalFunc, "evalFunc")
         return fakeTuple
 
-    #THIS MIGHT BREAK EVERYTHING
+    #MinMax
     def minMax(gameState, agent, depth, alpha, beta):
 
       actionsList = gameState.getLegalActions(agent)
@@ -325,8 +321,6 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     Your expectimax agent (question 4)
     """
     def getAction(self, gameState):
-    #1 make minVal and MaxVal only compute the +inf or the -inf and the < or > part, put remainder in mainDriver
-    #3 cleanup variables in MinVal and MaxVal so we don't have to index [1]
       def mainDriver(gameState, agent, depth):
 
         #once we run out of agents in the layer, we progress onto the next and reset Pacman
@@ -354,7 +348,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           fakeTuple = (evalFunc, "evalFunc")
           return fakeTuple
 
-      #THIS MIGHT BREAK EVERYTHING
+      #MinMax
       def minMax(gameState, agent, depth):
 
         actionsList = gameState.getLegalActions(agent)
@@ -400,98 +394,84 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                     
       return mainDriver(gameState, 0, 0)[1]
 
-#KAREN -> REMOVE FUCKING LINK
-#https://github.com/jasonwu0731/AI-Pacman/blob/master/Pacman/hw2-multiagent/multiAgents.py
 def betterEvaluationFunction(currentGameState):
+   """
+    Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
+    evaluation function (question 5).
 
-  #KAREN -> change all variable names!!!
-  pacmanPos = currentGameState.getPacmanPosition()
-  ghostList = currentGameState.getGhostStates() 
-  foods = currentGameState.getFood().asList()
-  capsules = currentGameState.getCapsules()
-  # Return based on game state
+    DESCRIPTION: Function is very C-based as I found scores are higher when I manually write out most of my operations.
+    This method focuses on number of remaining food, number of capsules, ghost distances, and scared ghosts.
+    Method blindly computes smallest distance to scared ghost, active ghost, and food
+    Return statement at end puts highest priority for obtaining capsules (no ghost that way), second highest for number of food
+    remaining, and a small amount is actually put to reaching closest food as it is good short-term but bad long-term.
+    Scared ghosts are always better than active ones since they can't eat pacman, so their ratio is also included in the math
+    """
+   import sys
 
-  #KAREN -> somehow unplagarize this
-  if currentGameState.isWin():
-    return float("inf")
-    
-  if currentGameState.isLose():
-    return float("-inf")
+   ghostList = currentGameState.getGhostStates() 
+   pacPos = currentGameState.getPacmanPosition() 
+   food = currentGameState.getFood().asList()
+   capsules = len(currentGameState.getCapsules())
+   minScaredGhostDist = -1
+   minGhostDist = -1
 
-  # Populate foodDistList and find minFoodDist
-  foodDistList = list()
-  minFoodDist = float("inf")
+   ret = scoreEvaluationFunction(currentGameState)
+   activeGhosts = list() 
+   scaredGhosts = list()
+   foodDist = list() 
+   ghostPos = tuple()
+   
+   #terminator
+   if currentGameState.isLose():
+     return (-1 * sys.maxsize)
 
-   #KAREN -> make using rang(len())
-  for each in foods:
-    MH = util.manhattanDistance(each, pacmanPos)
-    foodDistList.append(MH)
-    if MH < minFoodDist:
-      minFoodDist = MH
-    else:
-      minFoodDist = minFoodDist
+   if currentGameState.isWin():
+     return sys.maxsize
+   
+   #manually computing nearest food increases score (not sure how)
+   smallestFood = food[0] 
+   for dot in range(len(food)):
 
-  # Populate ghostDistList and scaredGhostDistList, find minGhostDist and minScaredGhostDist
-  ghostDistList = list()
-  scaredGhostDistList = list()
-  ghostPos = tuple()
+     currFood = food[dot]
 
-  #KAREN -> make using rang(len())
-  for each in ghostList:
-    if each.scaredTimer == 0:
-      ghostPos = each.getPosition()
-      MH = util.manhattanDistance(pacmanPos, ghostPos)
-      ghostDistList.append(MH)
-    else:
-      ghostPos = each.getPosition()
-      MH = util.manhattanDistance(ghostPos, pacmanPos)
-      scaredGhostDistList.append(MH)
+     MH = util.manhattanDistance(currFood, pacPos)
+     foodDist.append(MH)
+     if MH < smallestFood:
+       smallestFood = MH
+     else:
+       smallestFood = smallestFood
+   
+   #manually computing nearest ghosts 
+   for ghost in range(len(ghostList)):
+     
+     currGhost = ghostList[ghost]
 
-  #KAREN -> compute minimum long way
-  if ghostDistList:
-    minGhostDist = min(ghostDistList)
-  else:
-    minGhostDist = -1
+     if not currGhost.scaredTimer:
+       ghostPos = currGhost.getPosition()
+       MH = util.manhattanDistance(pacPos, ghostPos)
+       activeGhosts.append(MH)
 
-  #KAREN -> compute minimum long way
-  if scaredGhostDistList:
-    minScaredGhostDist = min(scaredGhostDistList)
-  else:
-    minScaredGhostDist = -1 
+     else:
+       ghostPos = currGhost.getPosition()
+       MH = util.manhattanDistance(pacPos, ghostPos)
+       scaredGhosts.append(MH)
+   
+   if activeGhosts:
+     minGhostDist = activeGhosts[0]
+     for ghost in activeGhosts:
+       if ghost < minGhostDist:
+         minGhostDist = ghost
 
-  # Evaluate score
-  score = scoreEvaluationFunction(currentGameState)
+   if scaredGhosts:
+     smallestScared = scaredGhosts[0]
+     for ghost in scaredGhosts:
+       if ghost < smallestScared:
+         smallestScared = ghost
+   
+   #where all the logic is!
+   ret += (-1.875 * smallestFood) + (-1 * (minScaredGhostDist / minGhostDist)) + ret + (-25 * capsules) + (-5 * len(food))
 
-  #original
-  """
-  # Distance to closest food
-  score = score + (-.75 * minFoodDist) #was 1.5
-  # Distance to closest ghost
-  score = score + (-1 * (1.0 / minGhostDist))
-  # Distance to closest scared ghost
-  score = score + (-1 * minScaredGhostDist)
-  # Number of capsules
-  score = score + (-10 * len(capsules))
-  # Number of food
-  score = score + (-2 * len(foods.asList()))
-  """
-  """
-  # Distance to closest food
-  score = score + (-0.75 * minFoodDist) #was 1.5
-  # Distance to closest ghost
-  #score = score + (-1 * (1.0 / minGhostDist))
-  # Distance to closest scared ghost
-  score += (-1*(1+minScaredGhostDist))/minGhostDist
-  # Number of capsules
-  score = score + (-10 * len(capsules))
-  # Number of food
-  score = score + (-2 * len(foods.asList()))
-  """
-  #score += (-.75 * minFoodDist) + (-1 * (1.0 / minGhostDist)) + (-1 * minScaredGhostDist) + score + (-10 * len(capsules)) + (-2 * len(foods.asList()))
-  score += (-1.875 * minFoodDist) + (-1 * (minScaredGhostDist / minGhostDist)) + score + (-25 * len(capsules)) + (-5 * len(foods))
-  #score += (-.75 * minFoodDist) + ((-1*(1+minScaredGhostDist))/minGhostDist) + (-10 * len(capsules)) + (-2 * len(foods.asList()))
-
-  return score
+   return ret
 
 # Abbreviation
 better = betterEvaluationFunction
