@@ -11,6 +11,7 @@ from game import Directions
 import random, util
 
 from game import Agent
+from fractions import Fraction as frac
 
 class ReflexAgent(Agent):
   """
@@ -399,106 +400,99 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                     
       return mainDriver(gameState, 0, 0)[1]
 
+#KAREN -> REMOVE FUCKING LINK
 #https://github.com/jasonwu0731/AI-Pacman/blob/master/Pacman/hw2-multiagent/multiAgents.py
 def betterEvaluationFunction(currentGameState):
 
-  food = currentGameState.getFood().asList()
-  ghosts = currentGameState.getGhostStates()
-  pacmanPosition = currentGameState.getPacmanPosition()
-  activeGhosts = [] # Keep active ghosts(can eat pacman)
-  scaredGhosts = [] # Keep scared ghosts(pacman should eat them for extra points)
-  totalCapsules = len(currentGameState.getCapsules()) # Keep total capsules
-  totalFood = len(food) # Keep total remaining food
-  myEval = 0 # Evaluation value
+  #KAREN -> change all variable names!!!
+  pacmanPos = currentGameState.getPacmanPosition()
+  ghostList = currentGameState.getGhostStates() 
+  foods = currentGameState.getFood().asList()
+  capsules = currentGameState.getCapsules()
+  # Return based on game state
 
-  # Fix active and scared ghosts #
-  for ghost in ghosts:
-      if ghost.scaredTimer: # Is scared ghost
-          scaredGhosts.append(ghost)
-      else:
-          activeGhosts.append(ghost)
+  #KAREN -> somehow unplagarize this
+  if currentGameState.isWin():
+    return float("inf")
+    
+  if currentGameState.isLose():
+    return float("-inf")
 
-  # Score weight: 1.5                                    #
-  # Better score -> better result                        #
-  # Score tell us some informations about current state  #
-  # but the weight is low. We don't care enough for this #
-  # But we do not want to lose                           #
-  myEval += 1.5 * currentGameState.getScore()
+  # Populate foodDistList and find minFoodDist
+  foodDistList = list()
+  minFoodDist = float("inf")
 
-  # Food weight: -10                                   #
-  # Pacman will receive 10 points if he eats one food  #
-  # If our state has a lot of food this is very bad    #
-  # We are far away from our goal. If pacman eats food #
-  # Evaluation value will be better in the new         #
-  # state, because remaining food is less              #
-  myEval += -10 * totalFood
+   #KAREN -> make using rang(len())
+  for each in foods:
+    MH = util.manhattanDistance(each, pacmanPos)
+    foodDistList.append(MH)
+    if MH < minFoodDist:
+      minFoodDist = MH
+    else:
+      minFoodDist = minFoodDist
 
-  # Capsules weight: -20                            #
-  # Same like food but pacman gains a huge amount   #
-  # of points if he eats ghosts. So our goal is to  #
-  # eat a capsule and then eat a ghost              #
-  # For that reason pacman should eat capsules more #
-  # frequently than food                            #
-  # Weight food < Weight capsules                   #
-  myEval += -20 * totalCapsules
+  # Populate ghostDistList and scaredGhostDistList, find minGhostDist and minScaredGhostDist
+  ghostDistList = list()
+  scaredGhostDistList = list()
+  ghostPos = tuple()
 
-  # Keep distances from food, active and scared ghosts #
-  foodDistances = []
-  activeGhostsDistances = []
-  scaredGhostsDistances = []
+  #KAREN -> make using rang(len())
+  for each in ghostList:
+    if each.scaredTimer == 0:
+      ghostPos = each.getPosition()
+      MH = util.manhattanDistance(pacmanPos, ghostPos)
+      ghostDistList.append(MH)
+    else:
+      ghostPos = each.getPosition()
+      MH = util.manhattanDistance(ghostPos, pacmanPos)
+      scaredGhostDistList.append(MH)
 
-  # Find distances #
-  for item in food:
-      foodDistances.append(manhattanDistance(pacmanPosition,item))
+  #KAREN -> compute minimum long way
+  if ghostDistList:
+    minGhostDist = min(ghostDistList)
+  else:
+    minGhostDist = -1
 
-  for item in activeGhosts:
-      scaredGhostsDistances.append(manhattanDistance(pacmanPosition,item.getPosition()))
+  #KAREN -> compute minimum long way
+  if scaredGhostDistList:
+    minScaredGhostDist = min(scaredGhostDistList)
+  else:
+    minScaredGhostDist = -1 
 
-  for item in scaredGhosts:
-      scaredGhostsDistances.append(manhattanDistance(pacmanPosition,item.getPosition()))
+  # Evaluate score
+  score = scoreEvaluationFunction(currentGameState)
 
-  # Fix evaluation based on food distances  #
-  # It is very bad for pacman to have close #
-  # food. He must eat it.                   #
-  # Close food weight: -1                   #
-  # Quite close food weight: -0.5           #
-  # Far away food weight: -0.2              #
-  for item in foodDistances:
-      if item < 3:
-          myEval += -1 * item
-      if item < 7:
-          myEval += -0.5 * item
-      else:
-          myEval += -0.2 * item
+  #original
+  """
+  # Distance to closest food
+  score = score + (-.75 * minFoodDist) #was 1.5
+  # Distance to closest ghost
+  score = score + (-1 * (1.0 / minGhostDist))
+  # Distance to closest scared ghost
+  score = score + (-1 * minScaredGhostDist)
+  # Number of capsules
+  score = score + (-10 * len(capsules))
+  # Number of food
+  score = score + (-2 * len(foods.asList()))
+  """
+  """
+  # Distance to closest food
+  score = score + (-0.75 * minFoodDist) #was 1.5
+  # Distance to closest ghost
+  #score = score + (-1 * (1.0 / minGhostDist))
+  # Distance to closest scared ghost
+  score += (-1*(1+minScaredGhostDist))/minGhostDist
+  # Number of capsules
+  score = score + (-10 * len(capsules))
+  # Number of food
+  score = score + (-2 * len(foods.asList()))
+  """
+  #score += (-.75 * minFoodDist) + (-1 * (1.0 / minGhostDist)) + (-1 * minScaredGhostDist) + score + (-10 * len(capsules)) + (-2 * len(foods.asList()))
+  score += (-1.875 * minFoodDist) + (-1 * (minScaredGhostDist / minGhostDist)) + score + (-25 * len(capsules)) + (-5 * len(foods))
+  #score += (-.75 * minFoodDist) + ((-1*(1+minScaredGhostDist))/minGhostDist) + (-10 * len(capsules)) + (-2 * len(foods.asList()))
 
-  # Fix evaluation based on scared ghosts distances    #
-  # It is very bad for pacman to have close scared     #
-  # ghosts. He must eat them so as to gain many points #
-  # We should prefer to eat a ghost rather than eat a  #
-  # close food                                         #
-  # Close scared ghosts weight: -20                    #
-  # Quite close scared ghosts weight: -10              #
-  for item in scaredGhostsDistances:
-      if item < 3:
-          myEval += -20 * item
-      else:
-          myEval += -10 * item
+  return score
 
-  # Fix evaluation base on active ghosts distances    #
-  # Pacman should avoid active ghosts                 #
-  # Close ghost weight: 3                             #
-  # Quite close ghost weight: 2                       #
-  # Far away ghosts weight: 0.5                       #
-  # We should prefer ghosts remaining far away        #
-  for item in activeGhostsDistances:
-      if item < 3:
-          myEval += 3 * item
-      elif item < 7:
-          myEval += 2 * item
-      else:
-          myEval += 0.5 * item
-
-  return myEval
 # Abbreviation
 better = betterEvaluationFunction
 
